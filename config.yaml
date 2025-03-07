@@ -1,0 +1,14 @@
+cookie:
+  expiry_days: 30
+  key: 8f058fc8-1479-431f-a49b-1368cfefb8f5
+  name: dietary_safety_checker
+credentials:
+  usernames:
+    testuser:
+      email: test@example.com
+      name: Test User
+      password: $2b$12$SjF6uB7xe0Gz2Z8LbYmq5O/tQFdkRBny1f0t/3vIK7YH.jqC2CUCK
+    vsnbujimalla:
+      email: vsnbujimalla@gmail.com
+      name: vsnbujimalla
+      password: Password@18

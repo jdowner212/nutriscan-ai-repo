@@ -1,8 +1,10 @@
+/* Common Button Styles */
 .stButton > button {
     width: 100%;
     margin-top: 20px;
 }
 
+/* Status Messages */
 .warning {
     color: #ff4444;
     padding: 10px;
@@ -17,8 +19,161 @@
     margin: 10px 0;
 }
 
-div[data-testid="stForm"] {
-    padding: 20px;
+/* Input Field Styles */
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    width: 100%;
+    padding: 8px 0;
+    margin: 5px 0;
+    border: none;
+    background: transparent;
+    transition: all 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus {
+    outline: none;
+}
+
+/* Style Streamlit's text input container */
+div[data-testid="stTextInput"] {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Authentication Page Branding */
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.brand-title {
+    color: #4CAF50;
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.brand-subtitle {
+    color: #666;
+    font-size: 1.2em;
+    margin-bottom: 2rem;
+}
+
+/* Feature Cards for Sign Up */
+.auth-image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.auth-feature-card {
+    background: #ffffff;
+    padding: 1.5rem;
     border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.auth-feature-card h3 {
+    color: #4CAF50;
+    margin-bottom: 0.5rem;
+}
+
+/* Welcome Page Specific Styles */
+.welcome-container {
+    text-align: center;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 15px;
+}
+
+.welcome-text {
+    font-size: 1.2rem;
+    color: #666;
+    max-width: 800px;
+    margin: 1rem auto;
+}
+
+/* Quick Action Cards */
+.action-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin: 1rem 0;
+    text-align: center;
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+}
+
+.action-card h3 {
+    color: #4CAF50;
+    margin-bottom: 1rem;
+}
+
+.welcome-subtitle {
+    font-size: 1.4em;
+    color: #4CAF50;
+    margin-bottom: 1rem;
+}
+
+/* Input Labels */
+.input-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+/* Customize radio buttons */
+.st-emotion-cache-1gulkj5 {
+    margin-bottom: 2rem;
+}
+
+/* Progress Indicator */
+.progress-steps {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.step-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 1rem;
+    position: relative;
+}
+
+.step-indicator.active {
+    background: #4CAF50;
+    color: white;
+}
+
+.step-indicator::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: #eee;
+    right: -100%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.step-indicator:last-child::after {
+    display: none;
 }

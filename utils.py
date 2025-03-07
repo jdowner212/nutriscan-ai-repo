@@ -1,11 +1,13 @@
 import google.generativeai as genai
 import os
-from typing import List, Dict, Optional
-import pytesseract
-from PIL import Image
+from typing import List, Dict, Optional, Tuple
 import cv2
 import numpy as np
-import io
+from pyzbar.pyzbar import decode
+import requests
+import json
+from PIL import Image
+import pytesseract
 import re
 
 def init_genai():
@@ -115,12 +117,95 @@ Allergen Information: {nutrition_info['allergens']}
 Nutrient Information:
 {chr(10).join(nutrition_info['nutrients'])}
 """
-
         return formatted_text.strip()
     except Exception as e:
         raise Exception(f"Failed to process image: {str(e)}")
 
-def analyze_ingredients(model, user_profile: Dict, ingredients: List[str]) -> Dict:
+def scan_barcode(image: np.ndarray) -> Optional[str]:
+    """
+    Scan barcode from image and return the barcode number
+    """
+    try:
+        # Convert image to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Decode barcodes
+        barcodes = decode(gray)
+
+        # Return the first barcode found
+        if barcodes:
+            barcode = barcodes[0].data.decode('utf-8')
+            return barcode
+        return None
+    except Exception as e:
+        raise Exception(f"Failed to scan barcode: {str(e)}")
+
+def get_product_info(barcode: str) -> Optional[Dict]:
+    """
+    Retrieve product information from Open Food Facts API
+    """
+    try:
+        # Make API request to Open Food Facts
+        url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
+        response = requests.get(url)
+        data = response.json()
+
+        if data.get('status') != 1:
+            return None
+
+        product = data['product']
+
+        # Extract relevant information
+        nutrition_info = {
+            'product_name': product.get('product_name', 'Unknown Product'),
+            'serving_size': product.get('serving_size', 'Not specified'),
+            'calories': product.get('nutriments', {}).get('energy-kcal_100g', 'Not specified'),
+            'ingredients': product.get('ingredients_text', ''),
+            'allergens': product.get('allergens_hierarchy', []),
+            'nutrients': {
+                'fat': product.get('nutriments', {}).get('fat_100g', 'Not specified'),
+                'proteins': product.get('nutriments', {}).get('proteins_100g', 'Not specified'),
+                'carbohydrates': product.get('nutriments', {}).get('carbohydrates_100g', 'Not specified'),
+                'sugars': product.get('nutriments', {}).get('sugars_100g', 'Not specified'),
+                'fiber': product.get('nutriments', {}).get('fiber_100g', 'Not specified'),
+                'sodium': product.get('nutriments', {}).get('sodium_100g', 'Not specified')
+            }
+        }
+
+        return nutrition_info
+    except Exception as e:
+        raise Exception(f"Failed to retrieve product information: {str(e)}")
+
+def format_nutrition_info(info: Dict) -> str:
+    """
+    Format nutrition information for analysis
+    """
+    nutrients_text = "\n".join([
+        f"{key.capitalize()}: {value}g per 100g"
+        for key, value in info['nutrients'].items()
+        if value != 'Not specified'
+    ])
+
+    allergens_text = ", ".join([
+        allergen.replace('en:', '') for allergen in info['allergens']
+    ]) or "None listed"
+
+    formatted_text = f"""
+Nutrition Facts for {info['product_name']}:
+Serving Size: {info['serving_size']}
+Calories: {info['calories']} kcal per 100g
+
+Ingredients: {info['ingredients']}
+
+Allergen Information: {allergens_text}
+
+Nutrient Information per 100g:
+{nutrients_text}
+"""
+
+    return formatted_text.strip()
+
+def analyze_ingredients(model, user_profile: Dict, nutrition_info: str) -> Dict:
     """
     Analyze ingredients using Gemini API based on user profile
     """
@@ -140,7 +225,7 @@ USER PROFILE:
 - Dietary Restrictions: {dietary_restrictions}
 
 NUTRITION INFORMATION:
-{ingredients[0]}
+{nutrition_info}
 
 Please provide a comprehensive analysis in the following format:
 

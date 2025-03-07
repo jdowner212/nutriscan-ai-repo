@@ -1,5 +1,9 @@
 {pkgs}: {
   deps = [
+    pkgs.libyaml
+    pkgs.libGLU
+    pkgs.libGL
+    pkgs.zbar
     pkgs.zlib
     pkgs.tk
     pkgs.tcl
