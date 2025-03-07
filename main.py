@@ -20,13 +20,6 @@ if 'user_data' not in st.session_state:
 if 'analysis_results' not in st.session_state:
     st.session_state.analysis_results = None
 
-# Initialize Gemini API
-try:
-    model = init_genai()
-except ValueError as e:
-    st.error(f"Error initializing Gemini API: {str(e)}")
-    st.stop()
-
 # App title
 st.title("🥗 Dietary Safety Checker")
 
@@ -106,21 +99,30 @@ elif st.session_state.step == 3:
                 st.session_state.step = 2
                 st.rerun()
         with col2:
-            if st.form_submit_button("Analyze"):
-                if not ingredients.strip():
-                    st.error("Please enter at least one ingredient")
-                else:
-                    ingredient_list = [i.strip() for i in ingredients.split('\n') if i.strip()]
+            submit_analysis = st.form_submit_button("Analyze")
 
-                    with st.spinner("Analyzing ingredients..."):
-                        analysis_result = analyze_ingredients(model, st.session_state.user_data, ingredient_list)
+    if submit_analysis:
+        if not ingredients.strip():
+            st.error("Please enter at least one ingredient")
+        else:
+            ingredient_list = [i.strip() for i in ingredients.split('\n') if i.strip()]
 
-                        if analysis_result['success']:
-                            st.session_state.analysis_results = analysis_result['analysis']
-                            st.session_state.step = 4
-                            st.rerun()
-                        else:
-                            st.error(f"Analysis failed: {analysis_result['error']}")
+            try:
+                with st.spinner("Initializing AI model..."):
+                    model = init_genai()
+
+                with st.spinner("Analyzing ingredients..."):
+                    analysis_result = analyze_ingredients(model, st.session_state.user_data, ingredient_list)
+
+                    if analysis_result['success']:
+                        st.session_state.analysis_results = analysis_result['analysis']
+                        st.session_state.step = 4
+                        st.rerun()
+                    else:
+                        st.error(f"Analysis failed: {analysis_result['error']}")
+            except Exception as e:
+                st.error(f"An error occurred during analysis: {str(e)}")
+                st.info("Please try again. If the problem persists, check your API key or contact support.")
 
 # Step 4: Results
 elif st.session_state.step == 4:

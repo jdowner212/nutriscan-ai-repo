@@ -6,35 +6,57 @@ def init_genai():
     """Initialize the Gemini API client"""
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        raise ValueError("GOOGLE_API_KEY environment variable is not set")
+        raise ValueError("GOOGLE_API_KEY environment variable is not set. Please check your API key configuration.")
 
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel('gemini-pro')
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-pro')
+        # Test the model with a simple prompt to ensure it's working
+        test_response = model.generate_content("Test connection")
+        if not test_response:
+            raise ValueError("Could not get a response from the API")
+        return model
+    except Exception as e:
+        raise Exception(f"Failed to initialize Gemini API: {str(e)}")
 
 def analyze_ingredients(model, user_profile: Dict, ingredients: List[str]) -> Dict:
     """
     Analyze ingredients using Gemini API based on user profile
     """
     try:
+        # Format health conditions and allergies for better readability
+        health_conditions = user_profile.get('health_conditions', '').strip() or 'None reported'
+        allergies = user_profile.get('allergies', '').strip() or 'None reported'
+        dietary_restrictions = ', '.join(user_profile.get('dietary_restrictions', ['None']))
+
         prompt = f"""
-        Analyze the following ingredients for dietary safety based on this user profile:
+As a dietary safety expert, analyze these ingredients for a person with the following profile:
 
-        User Profile:
-        - Age: {user_profile['age']}
-        - Health Conditions: {user_profile['health_conditions']}
-        - Allergies: {user_profile['allergies']}
-        - Dietary Restrictions: {user_profile['dietary_restrictions']}
+USER PROFILE:
+- Age: {user_profile['age']} years
+- Health Conditions: {health_conditions}
+- Allergies: {allergies}
+- Dietary Restrictions: {dietary_restrictions}
 
-        Ingredients to analyze:
-        {', '.join(ingredients)}
+INGREDIENTS TO ANALYZE:
+{', '.join(ingredients)}
 
-        For each ingredient, provide:
-        1. Safety status (Safe/Unsafe/Caution)
-        2. Reason for the status
-        3. Recommendations or alternatives if unsafe
+Please provide a detailed analysis in the following format:
 
-        Format the response as a structured analysis.
-        """
+ANALYSIS SUMMARY:
+[Overall safety assessment]
+
+DETAILED INGREDIENT ANALYSIS:
+[For each ingredient provide:]
+- Safety Status: [Safe/Caution/Unsafe]
+- Concerns: [List any health or dietary concerns]
+- Alternatives: [If unsafe or caution, suggest alternatives]
+
+RECOMMENDATIONS:
+[Provide general recommendations based on the analysis]
+
+Please be thorough and consider all health conditions, allergies, and dietary restrictions in your analysis.
+"""
 
         response = model.generate_content(prompt)
         return {
@@ -44,7 +66,7 @@ def analyze_ingredients(model, user_profile: Dict, ingredients: List[str]) -> Di
     except Exception as e:
         return {
             'success': False,
-            'error': str(e)
+            'error': f"Analysis failed: {str(e)}"
         }
 
 def validate_user_input(data: Dict) -> tuple[bool, str]:
