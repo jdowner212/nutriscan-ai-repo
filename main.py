@@ -1,5 +1,7 @@
 import streamlit as st
-from utils import init_genai, analyze_ingredients, validate_user_input
+from utils import init_genai, analyze_ingredients, validate_user_input, process_nutrition_image
+from PIL import Image
+import io
 
 # Page configuration
 st.set_page_config(
@@ -82,47 +84,47 @@ elif st.session_state.step == 2:
                 st.session_state.step = 3
                 st.rerun()
 
-# Step 3: Ingredient Analysis
+# Step 3: Nutrition Facts Image Upload
 elif st.session_state.step == 3:
-    st.header("Step 3: Ingredient Analysis")
+    st.header("Step 3: Upload Nutrition Facts Image")
 
-    with st.form("ingredient_form"):
-        ingredients = st.text_area(
-            "Enter ingredients to analyze",
-            help="Enter each ingredient on a new line",
-            height=150
-        )
+    st.info("Upload a clear image of the nutrition facts label. Supported formats: PNG, JPG, JPEG")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.form_submit_button("Back"):
-                st.session_state.step = 2
-                st.rerun()
-        with col2:
-            submit_analysis = st.form_submit_button("Analyze")
+    uploaded_file = st.file_uploader("Choose an image", type=["png", "jpg", "jpeg"])
 
-    if submit_analysis:
-        if not ingredients.strip():
-            st.error("Please enter at least one ingredient")
-        else:
-            ingredient_list = [i.strip() for i in ingredients.split('\n') if i.strip()]
+    col1, col2 = st.columns(2)
 
+    if uploaded_file is not None:
+        # Display the uploaded image
+        image = Image.open(uploaded_file)
+        st.image(image, caption="Uploaded Image", use_column_width=True)
+
+        if st.button("Analyze Image"):
             try:
-                with st.spinner("Initializing AI model..."):
-                    model = init_genai()
+                with st.spinner("Processing image..."):
+                    extracted_text = process_nutrition_image(image)
 
-                with st.spinner("Analyzing ingredients..."):
-                    analysis_result = analyze_ingredients(model, st.session_state.user_data, ingredient_list)
+                    if extracted_text:
+                        with st.spinner("Analyzing ingredients..."):
+                            model = init_genai()
+                            analysis_result = analyze_ingredients(model, st.session_state.user_data, [extracted_text])
 
-                    if analysis_result['success']:
-                        st.session_state.analysis_results = analysis_result['analysis']
-                        st.session_state.step = 4
-                        st.rerun()
+                            if analysis_result['success']:
+                                st.session_state.analysis_results = analysis_result['analysis']
+                                st.session_state.step = 4
+                                st.rerun()
+                            else:
+                                st.error(f"Analysis failed: {analysis_result['error']}")
                     else:
-                        st.error(f"Analysis failed: {analysis_result['error']}")
+                        st.error("Could not extract text from the image. Please ensure the image is clear and contains readable text.")
             except Exception as e:
-                st.error(f"An error occurred during analysis: {str(e)}")
-                st.info("Please try again. If the problem persists, check your API key or contact support.")
+                st.error(f"An error occurred: {str(e)}")
+                st.info("Please try again with a clearer image or contact support if the problem persists.")
+
+    with col1:
+        if st.button("Back"):
+            st.session_state.step = 2
+            st.rerun()
 
 # Step 4: Results
 elif st.session_state.step == 4:
@@ -133,7 +135,7 @@ elif st.session_state.step == 4:
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Analyze More Ingredients"):
+        if st.button("Analyze Another Product"):
             st.session_state.step = 3
             st.session_state.analysis_results = None
             st.rerun()

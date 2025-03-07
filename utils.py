@@ -1,6 +1,11 @@
 import google.generativeai as genai
 import os
 from typing import List, Dict
+import pytesseract
+from PIL import Image
+import cv2
+import numpy as np
+import io
 
 def init_genai():
     """Initialize the Gemini API client"""
@@ -19,6 +24,28 @@ def init_genai():
     except Exception as e:
         raise Exception(f"Failed to initialize Gemini API: {str(e)}")
 
+def process_nutrition_image(image: Image.Image) -> str:
+    """
+    Process nutrition facts image and extract text
+    """
+    try:
+        # Convert PIL Image to OpenCV format
+        img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        # Image preprocessing
+        gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+        thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+        # OCR
+        text = pytesseract.image_to_string(thresh)
+
+        if not text.strip():
+            return None
+
+        return text.strip()
+    except Exception as e:
+        raise Exception(f"Failed to process image: {str(e)}")
+
 def analyze_ingredients(model, user_profile: Dict, ingredients: List[str]) -> Dict:
     """
     Analyze ingredients using Gemini API based on user profile
@@ -30,7 +57,7 @@ def analyze_ingredients(model, user_profile: Dict, ingredients: List[str]) -> Di
         dietary_restrictions = ', '.join(user_profile.get('dietary_restrictions', ['None']))
 
         prompt = f"""
-As a dietary safety expert, analyze these ingredients for a person with the following profile:
+As a dietary safety expert, analyze these ingredients and nutrition information for a person with the following profile:
 
 USER PROFILE:
 - Age: {user_profile['age']} years
@@ -38,22 +65,22 @@ USER PROFILE:
 - Allergies: {allergies}
 - Dietary Restrictions: {dietary_restrictions}
 
-INGREDIENTS TO ANALYZE:
-{', '.join(ingredients)}
+NUTRITION INFORMATION:
+{ingredients[0]}
 
 Please provide a detailed analysis in the following format:
 
 ANALYSIS SUMMARY:
 [Overall safety assessment]
 
-DETAILED INGREDIENT ANALYSIS:
-[For each ingredient provide:]
-- Safety Status: [Safe/Caution/Unsafe]
-- Concerns: [List any health or dietary concerns]
-- Alternatives: [If unsafe or caution, suggest alternatives]
+NUTRITIONAL ANALYSIS:
+- Key Ingredients: [List main ingredients and their implications]
+- Allergen Status: [Identify potential allergens]
+- Dietary Compliance: [Check against dietary restrictions]
+- Health Impact: [Consider health conditions]
 
 RECOMMENDATIONS:
-[Provide general recommendations based on the analysis]
+[Provide specific recommendations based on the user's profile]
 
 Please be thorough and consider all health conditions, allergies, and dietary restrictions in your analysis.
 """
