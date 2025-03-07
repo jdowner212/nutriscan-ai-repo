@@ -10,7 +10,7 @@ def init_genai():
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-pro')
         # Test the model with a simple prompt to ensure it's working
         test_response = model.generate_content("Test connection")
         if not test_response:
