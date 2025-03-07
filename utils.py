@@ -1,11 +1,12 @@
 import google.generativeai as genai
 import os
-from typing import List, Dict
+from typing import List, Dict, Optional
 import pytesseract
 from PIL import Image
 import cv2
 import numpy as np
 import io
+import re
 
 def init_genai():
     """Initialize the Gemini API client"""
@@ -24,25 +25,98 @@ def init_genai():
     except Exception as e:
         raise Exception(f"Failed to initialize Gemini API: {str(e)}")
 
-def process_nutrition_image(image: Image.Image) -> str:
+def enhance_image(image: np.ndarray) -> np.ndarray:
     """
-    Process nutrition facts image and extract text
+    Enhance image quality for better OCR
+    """
+    # Convert to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Noise removal
+    denoised = cv2.fastNlMeansDenoising(gray)
+
+    # Thresholding
+    thresh = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+    # Dilation
+    kernel = np.ones((1, 1), np.uint8)
+    dilated = cv2.dilate(thresh, kernel, iterations=1)
+
+    return dilated
+
+def extract_nutrition_info(text: str) -> Dict[str, str]:
+    """
+    Extract structured nutrition information from OCR text
+    """
+    info = {
+        'serving_size': '',
+        'calories': '',
+        'ingredients': '',
+        'allergens': '',
+        'nutrients': []
+    }
+
+    lines = text.split('\n')
+    current_section = None
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        # Identify sections
+        lower_line = line.lower()
+        if 'serving size' in lower_line:
+            info['serving_size'] = re.sub(r'serving size[: ]*', '', line, flags=re.IGNORECASE)
+        elif 'calories' in lower_line:
+            info['calories'] = re.sub(r'calories[: ]*', '', line, flags=re.IGNORECASE)
+        elif 'ingredients' in lower_line:
+            current_section = 'ingredients'
+        elif 'contains' in lower_line and ('allergen' in lower_line or any(allergen in lower_line for allergen in ['milk', 'soy', 'nuts', 'wheat'])):
+            info['allergens'] = line
+        elif current_section == 'ingredients':
+            info['ingredients'] += ' ' + line
+        elif re.match(r'^[\d.]+ *[g|mg|%]', line):
+            info['nutrients'].append(line)
+
+    return info
+
+def process_nutrition_image(image: Image.Image) -> Optional[str]:
+    """
+    Process nutrition facts image and extract text with enhanced preprocessing
     """
     try:
         # Convert PIL Image to OpenCV format
         img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
-        # Image preprocessing
-        gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
-        thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        # Image preprocessing pipeline
+        processed_img = enhance_image(img_cv)
 
-        # OCR
-        text = pytesseract.image_to_string(thresh)
+        # Configure OCR parameters for better accuracy
+        custom_config = r'--oem 3 --psm 6'
+        text = pytesseract.image_to_string(processed_img, config=custom_config)
 
         if not text.strip():
             return None
 
-        return text.strip()
+        # Extract structured information
+        nutrition_info = extract_nutrition_info(text)
+
+        # Format the information for analysis
+        formatted_text = f"""
+Nutrition Facts:
+Serving Size: {nutrition_info['serving_size']}
+Calories: {nutrition_info['calories']}
+
+Ingredients: {nutrition_info['ingredients']}
+
+Allergen Information: {nutrition_info['allergens']}
+
+Nutrient Information:
+{chr(10).join(nutrition_info['nutrients'])}
+"""
+
+        return formatted_text.strip()
     except Exception as e:
         raise Exception(f"Failed to process image: {str(e)}")
 
@@ -57,7 +131,7 @@ def analyze_ingredients(model, user_profile: Dict, ingredients: List[str]) -> Di
         dietary_restrictions = ', '.join(user_profile.get('dietary_restrictions', ['None']))
 
         prompt = f"""
-As a dietary safety expert, analyze these ingredients and nutrition information for a person with the following profile:
+As a nutrition and dietary safety expert, analyze this nutrition label for a person with the following profile:
 
 USER PROFILE:
 - Age: {user_profile['age']} years
@@ -68,21 +142,37 @@ USER PROFILE:
 NUTRITION INFORMATION:
 {ingredients[0]}
 
-Please provide a detailed analysis in the following format:
+Please provide a comprehensive analysis in the following format:
 
-ANALYSIS SUMMARY:
-[Overall safety assessment]
+SAFETY ASSESSMENT:
+[Provide an overall safety rating (Safe/Caution/Unsafe) and brief explanation]
 
-NUTRITIONAL ANALYSIS:
-- Key Ingredients: [List main ingredients and their implications]
-- Allergen Status: [Identify potential allergens]
-- Dietary Compliance: [Check against dietary restrictions]
-- Health Impact: [Consider health conditions]
+DETAILED ANALYSIS:
+1. Allergen Risk:
+   - Known allergens present
+   - Cross-contamination risks
+   - Severity level for user's specific allergies
+
+2. Dietary Compliance:
+   - Compatibility with dietary restrictions
+   - Any conflicting ingredients
+
+3. Nutritional Impact:
+   - Key nutrients and their relevance to user's health conditions
+   - Portion size considerations
+   - Caloric and macro-nutrient assessment
+
+4. Health Considerations:
+   - Specific impacts on user's health conditions
+   - Potential interactions with medications (if any)
+   - Long-term consumption considerations
 
 RECOMMENDATIONS:
-[Provide specific recommendations based on the user's profile]
+- Specific advice for safe consumption
+- Suggested alternatives (if needed)
+- Portion size recommendations
 
-Please be thorough and consider all health conditions, allergies, and dietary restrictions in your analysis.
+Please prioritize accuracy and be specific about any health risks or concerns.
 """
 
         response = model.generate_content(prompt)
