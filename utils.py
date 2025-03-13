@@ -16,7 +16,7 @@ def init_genai():
         api_key = os.getenv("GOOGLE_API_KEY")
     except:
         print('GOOGLE_API_KEY environment variable is not set. Please check your API key configuration.')
-        api_key=''
+        api_key=None
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is not set. Please check your API key configuration.")
 
