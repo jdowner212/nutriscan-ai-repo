@@ -1,4 +1,3 @@
-print('START OF MAIN.PY')
 import os
 os.write(1,b'Something was executed.\n')
 
@@ -74,7 +73,7 @@ def authenticate(username: str, password: str) -> bool:
 
 # Page configuration
 st.set_page_config(
-    page_title="GroceryHelper AI",
+    page_title="NutriScan AI",
     page_icon="🥗",
     layout="wide"
 )
