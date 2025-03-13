@@ -15,7 +15,10 @@ def init_genai():
     """Initialize the Gemini API client"""
     # api_key = os.getenv("GOOGLE_API_KEY")
 
-    api_key = st.secrets["api"]["GOOGLE_API_KEY"]
+    try:
+        api_key = os.environ["GOOGLE_API_KEY"]
+    except:
+        api_key = st.secrets["api"]["GOOGLE_API_KEY"]
 
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is not set. Please check your API key configuration.")
