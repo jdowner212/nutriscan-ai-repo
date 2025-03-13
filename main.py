@@ -1,3 +1,6 @@
+print('START OF MAIN.PY')
+
+
 import streamlit as st
 from utils import (
     init_genai, analyze_ingredients, validate_user_input,
@@ -7,6 +10,8 @@ from PIL import Image
 import numpy as np
 import cv2
 from auth import render_auth_ui, initialize_auth
+
+
 
 # Page configuration
 st.set_page_config(
