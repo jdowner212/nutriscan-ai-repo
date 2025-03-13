@@ -1,4 +1,6 @@
-#!/Users/neeharbujimalla/Downloads/SafeDietAnalyzer/.venv/bin/python3.11
+#!/bin/sh
+'''exec' "/Users/janedowner/Library/Mobile Documents/com~apple~CloudDocs/Desktop_icloud/MyRealProduct/nutriscan-ai-repo/.venv/bin/python" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys

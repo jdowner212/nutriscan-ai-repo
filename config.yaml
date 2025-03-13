@@ -4,6 +4,10 @@ cookie:
   name: dietary_safety_checker
 credentials:
   usernames:
+    janesd:
+      email: jane.s.downer@gmail.com
+      name: janesd
+      password: Password7
     testuser:
       email: test@example.com
       name: Test User

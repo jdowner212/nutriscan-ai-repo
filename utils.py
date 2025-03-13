@@ -10,13 +10,16 @@ from PIL import Image
 import pytesseract
 import re
 import streamlit as st
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv('.env')
+
 
 def init_genai():
     """Initialize the Gemini API client"""
-    # api_key = os.getenv("GOOGLE_API_KEY")
-
     try:
-        api_key = os.environ["GOOGLE_API_KEY"]
+        api_key = os.getenv("GOOGLE_API_KEY")
     except:
         api_key = st.secrets["api"]["GOOGLE_API_KEY"]
 

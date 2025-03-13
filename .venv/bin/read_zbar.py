@@ -1,4 +1,4 @@
-#!/Users/neeharbujimalla/Downloads/SafeDietAnalyzer/.venv/bin/python3.11
+#!/Users/janedowner/Library/Mobile Documents/com~apple~CloudDocs/Desktop_icloud/MyRealProduct/nutriscan-ai-repo/.venv/bin/python
 from __future__ import print_function
 
 import argparse
