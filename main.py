@@ -1,4 +1,6 @@
 print('START OF MAIN.PY')
+import os
+os.write(1,b'Something was executed.\n')
 
 
 import streamlit as st
