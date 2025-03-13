@@ -12,8 +12,65 @@ from PIL import Image
 import numpy as np
 import cv2
 from auth import render_auth_ui, initialize_auth
+import boto3
 
 
+
+s3_client=boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_REGION'),
+    verify=True,
+    use_ssl=True,
+    config=boto3.session.Config(
+        signature_version='s3v4',
+        retries={'max_attempts':3},
+    )
+)
+
+S3_BUCKET=os.getenv('S3_BUCKET')
+S3_USERS_KEY = 'users/credentials.json'
+
+
+def get_users_from_s3() -> dict:
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET, Key=S3_USERS_KEY)
+        users_data = json.loads(response['Body'].read().decode('utf-8'))
+        return users_data
+    except s3_client.exceptions.NoSuchKey:
+        return {}
+    except Exception as e:
+        st.error(f"An error occurred while fetching user data from S3: {str(e)}")
+        return {}
+
+def save_users_to_s3(users_data: dict) -> bool:
+    try:
+        users_json=json.dumps(users_data)
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=S3_USERS_KEY,
+            Body=users_json
+        )
+        return True
+    except Exception as e:
+        st.error(f"An error occurred while saving to S3: {str(e)}")
+        return False
+
+def authenticate(username: str, password: str) -> bool:
+    """
+    Verify user credentials against S3 stored credentials.
+
+    Args:
+        username (str): The username to verify
+        password (str): The plain text password to verify
+
+    Returns:
+        bool: True if credentials are valid, False otherwise
+    """
+    users = get_users_from_s3()
+    hashed_password = hash_password(password)
+    return username in users and users[username] == hashed_password
 
 # Page configuration
 st.set_page_config(
