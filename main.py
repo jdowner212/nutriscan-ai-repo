@@ -38,6 +38,7 @@ from auth import *
 
     ##############################
 
+
 def is_profile_complete():
     """Check if user has completed their profile"""
     required_fields = ['name', 'age', 'height', 'weight', 'dietary_restrictions']
