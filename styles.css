@@ -1,17 +1,61 @@
-/* Common Button Styles */
+/* Enhanced button styles */
 .stButton > button {
-    width: 100%;
-    margin-top: 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.stButton > button:hover {
+    background-color: #43a047;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+.stButton > button:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Secondary button style with padding fix */
+.secondary-button {
+    margin: 0;
+    padding: 0;
+}
+
+.secondary-button .stButton {
+    margin: 0;
+    padding: 0;
+}
+
+.secondary-button .stButton > button {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #ddd;
+    margin: 0;
+    width: 100%;
+}
+
+.secondary-button .stButton > button:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+/* Danger button style */
+.danger-button .stButton > button {
+    background-color: #f44336;
+}
+
+.danger-button .stButton > button:hover {
+    background-color: #e53935;
+}
+
 
 /* Status Messages */
-.warning {
-    color: #ff4444;
-    padding: 10px;
-    border-radius: 5px;
-    margin: 10px 0;
-}
-
 .success {
     color: #4CAF50;
     padding: 10px;
@@ -57,6 +101,13 @@ div[data-testid="stTextInput"] {
     margin-bottom: 0.5rem;
 }
 
+.brand-header {
+    color: #4CAF50;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+}
+
 .brand-subtitle {
     color: #666;
     font-size: 1.2em;
@@ -86,11 +137,12 @@ div[data-testid="stTextInput"] {
 
 /* Welcome Page Specific Styles */
 .welcome-container {
-    text-align: center;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     padding: 2rem;
     margin-bottom: 2rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border-radius: 15px;
+    text-align: center;
 }
 
 .welcome-text {
@@ -100,80 +152,76 @@ div[data-testid="stTextInput"] {
     margin: 1rem auto;
 }
 
-/* Quick Action Cards */
-.action-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    margin: 1rem 0;
+
+/* Welcome screen action card buttons */
+.action-button > button {
+    background-color: white;
+    border: none;
+    border-left: 4px solid #4CAF50;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 1rem;
     text-align: center;
-    transition: transform 0.2s;
-    cursor: pointer;
+    display: block;
+    transition: box-shadow 0.2s;
+    width: 100%;
+    min-height: 120px;
 }
 
-.action-card:hover {
-    transform: translateY(-5px);
+.action-button > button:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    background-color: #f9fff9;
 }
 
-.action-card h3 {
-    color: #4CAF50;
-    margin-bottom: 1rem;
-}
+
 
 .welcome-subtitle {
-    font-size: 1.4em;
+    font-size: 1.25rem;
     color: #4CAF50;
+    font-weight: 600;
     margin-bottom: 1rem;
 }
 
-/* Input Labels */
-.input-label {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 5px;
-}
+
 
 /* Customize radio buttons */
 .st-emotion-cache-1gulkj5 {
     margin-bottom: 2rem;
 }
 
-/* Progress Indicator */
-.progress-steps {
-    display: flex;
-    justify-content: center;
-    margin: 2rem 0;
+
+.step {
+    background: white;
+    padding: 0.5rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    border: 1px solid #ddd;
 }
 
-.step-indicator {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: #eee;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 1rem;
-    position: relative;
+
+
+/* Typography */
+h1, h2, h3 {
+    font-weight: 700;
+    color: #333;
 }
 
-.step-indicator.active {
-    background: #4CAF50;
-    color: white;
+
+
+
+/* Style the form container */
+form {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin: 1rem 0;
+    transition: box-shadow 0.2s;
+    border-left: 4px solid #4CAF50;
+    overflow: hidden;
 }
 
-.step-indicator::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background: #eee;
-    right: -100%;
-    top: 50%;
-    transform: translateY(-50%);
+form:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    background-color: #f9fff9;
 }
 
-.step-indicator:last-child::after {
-    display: none;
-}
