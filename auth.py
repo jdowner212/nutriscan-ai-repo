@@ -191,18 +191,18 @@ def validate_email(email: str) -> bool:
     pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
     return bool(re.match(pattern, email))
 
-def sync_credentials_with_s3():
-    """Force sync local credentials with S3"""
-    try:
-        config = load_config()
-        # Upload current credentials to S3
-        success = save_users_to_s3(config['credentials']['usernames'])
-        if success:
-            st.success("Successfully synchronized credentials with S3")
-        else:
-            st.error("Failed to synchronize credentials with S3")
-    except Exception as e:
-        st.error(f"Error syncing credentials: {str(e)}")
+# def sync_credentials_with_s3():
+#     """Force sync local credentials with S3"""
+#     try:
+#         config = load_config()
+#         # Upload current credentials to S3
+#         success = save_users_to_s3(config['credentials']['usernames'])
+#         if success:
+#             st.success("Successfully synchronized credentials with S3")
+#         else:
+#             st.error("Failed to synchronize credentials with S3")
+#     except Exception as e:
+#         st.error(f"Error syncing credentials: {str(e)}")
 
 def render_auth_ui():
     """Render authentication UI with signup and password reset"""
@@ -362,11 +362,11 @@ def render_auth_ui():
             else:
                 st.error("Invalid username or email")
 
-    # Add a new admin section that can force sync
-    if st.checkbox("Admin Options"):
-        st.caption("Use these options only if you're experiencing credential synchronization issues")
-        if st.button("Force Sync Credentials with S3"):
-            sync_credentials_with_s3()
+    # # Add a new admin section that can force sync
+    # if st.checkbox("Admin Options"):
+    #     st.caption("Use these options only if you're experiencing credential synchronization issues")
+    #     if st.button("Force Sync Credentials with S3"):
+    #         sync_credentials_with_s3()
 
 
     return False
