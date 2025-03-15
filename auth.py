@@ -3,6 +3,124 @@ import re
 import yaml
 from yaml.loader import SafeLoader
 from yaml.dumper import SafeDumper
+import os
+import json
+
+import boto3
+
+
+s3_client=boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_REGION'),
+    verify=True,
+    use_ssl=True,
+    config=boto3.session.Config(
+        signature_version='s3v4',
+        retries={'max_attempts':3},
+    )
+)
+
+S3_BUCKET = os.getenv('S3_BUCKET')
+S3_USERS_KEY = 'users/credentials.json'
+S3_PROFILES_KEY = 'users/profiles.json'
+
+def get_users_from_s3() -> dict:
+    """
+    Retrieve user credential data from S3
+    """
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET, Key=S3_USERS_KEY)
+        users_data = json.loads(response['Body'].read().decode('utf-8'))
+        return users_data
+    except s3_client.exceptions.NoSuchKey:
+        return {}
+    except Exception as e:
+        st.error(f"An error occurred while fetching user data from S3: {str(e)}")
+        return {}
+
+def save_users_to_s3(users_data: dict) -> bool:
+    """
+    Save user credential data to S3
+    """
+    try:
+        users_json = json.dumps(users_data)
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=S3_USERS_KEY,
+            Body=users_json
+        )
+        return True
+    except Exception as e:
+        st.error(f"An error occurred while saving to S3: {str(e)}")
+        return False
+
+def get_user_profiles_from_s3() -> dict:
+    """
+    Retrieve user profile data from S3
+    """
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET, Key=S3_PROFILES_KEY)
+        profiles_data = json.loads(response['Body'].read().decode('utf-8'))
+        return profiles_data
+    except s3_client.exceptions.NoSuchKey:
+        st.info(f"No profiles found in S3, creating new profiles file")
+        return {}
+    except Exception as e:
+        st.error(f"An error occurred while fetching profile data from S3: {str(e)}")
+        return {}
+
+def save_user_profiles_to_s3(profiles_data: dict) -> bool:
+    """
+    Save user profile data to S3
+    """
+    try:
+        profiles_json = json.dumps(profiles_data)
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=S3_PROFILES_KEY,
+            Body=profiles_json
+        )
+        return True
+    except Exception as e:
+        st.error(f"An error occurred while saving profiles to S3: {str(e)}")
+        return False
+
+# Helper functions to work with specific user profiles
+def save_user_profile(username: str, profile_data: dict) -> bool:
+    """
+    Save a specific user's profile data
+    """
+    try:
+        profiles = get_user_profiles_from_s3()
+        # st.write(f"Debug - Current profiles: {profiles}")
+
+        profiles[username] = profile_data
+        # st.write(f"Debug - Saving profile for {username}: {profile_data}")
+
+        result = save_user_profiles_to_s3(profiles)
+        # st.write(f"Debug - Save result: {result}")
+
+        return result
+
+    except Exception as e:
+        st.error(f"Failed to save user profile: {str(e)}")
+        return False
+
+def get_user_profile(username: str) -> dict:
+    """
+    Get a specific user's profile data
+    """
+    try:
+        profiles = get_user_profiles_from_s3()
+        return profiles.get(username, {})
+    except Exception as e:
+        st.error(f"Failed to get user profile: {str(e)}")
+        return {}
+
+
+
 
 def save_config(config):
     """Save config to yaml file"""
@@ -54,13 +172,13 @@ def render_auth_ui():
     """Render authentication UI with signup and password reset"""
     config = load_config()
 
-    # Branding Header with Minimalist Design
-    st.markdown("""
-        <div class="auth-header">
-            <div class="brand-title">🥗 GroceryHelper AI</div>
-            <div class="brand-subtitle">Smart Nutrition Analysis & Diet Management</div>
-        </div>
-    """, unsafe_allow_html=True)
+    # # Branding Header with Minimalist Design
+    # st.markdown("""
+    #     <div class="auth-header">
+    #         <div class="brand-title">🛒 NutriScan AI</div>
+    #         <div class="brand-subtitle">Smart Nutrition Analysis & Diet Management</div>
+    #     </div>
+    # """, unsafe_allow_html=True)
 
     # Create authentication tabs
     auth_type = st.radio("", ["Login", "Sign Up", "Reset Password"], horizontal=True)
@@ -80,12 +198,26 @@ def render_auth_ui():
                     return False
 
                 users = config['credentials']['usernames']
+
                 if username in users and users[username]['password'] == password:
+                    user_profile = get_user_profile(username)
+                    # st.write(f"Debug - Loading user profile: {user_profile}")
+
                     st.session_state['authenticated'] = True
                     st.session_state['username'] = username
-                    st.session_state['step'] = 'welcome'  # Set initial step to welcome
+                    st.session_state['step'] = 'welcome'
+                    
+                    # Load saved profile data if available
+                    user_profile = get_user_profile(username)
+                    if user_profile:
+                        st.session_state['user_data'] = user_profile
+                    else:
+                        st.session_state['user_data'] = {}
+                        
                     st.success("Login successful!")
                     return True
+
+                ##
                 else:
                     st.error("Invalid username or password")
 
