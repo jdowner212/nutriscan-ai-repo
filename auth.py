@@ -35,9 +35,10 @@ def get_users_from_s3() -> dict:
         users_data = json.loads(response['Body'].read().decode('utf-8'))
         return users_data
     except s3_client.exceptions.NoSuchKey:
+        print(f"No credentials found in S3, will create new credentials file")
         return {}
     except Exception as e:
-        st.error(f"An error occurred while fetching user data from S3: {str(e)}")
+        print(f"An error occurred while fetching user data from S3: {str(e)}")
         return {}
 
 def save_users_to_s3(users_data: dict) -> bool:
@@ -51,9 +52,10 @@ def save_users_to_s3(users_data: dict) -> bool:
             Key=S3_USERS_KEY,
             Body=users_json
         )
+        print("User credentials successfully saved to S3")
         return True
     except Exception as e:
-        st.error(f"An error occurred while saving to S3: {str(e)}")
+        print(f"An error occurred while saving to S3: {str(e)}")
         return False
 
 def get_user_profiles_from_s3() -> dict:
@@ -126,14 +128,32 @@ def save_config(config):
     """Save config to yaml file"""
     with open('config.yaml', 'w') as file:
         yaml.dump(config, file, Dumper=SafeDumper)
+    save_users_to_s3(config['credentials']['usernames'])
+
 
 def load_config():
     """Load config from yaml file"""
     try:
+        # First, try to load from local YAML file
         with open('config.yaml') as file:
             config = yaml.load(file, Loader=SafeLoader)
-            return config
+        
+        # Try to get users from S3
+        s3_users = get_users_from_s3()
+        
+        # If we have users in S3, merge them with local config
+        if s3_users:
+            # Update local config with S3 data
+            config['credentials']['usernames'].update(s3_users)
+            # Save the merged config back to local file
+            with open('config.yaml', 'w') as file:
+                yaml.dump(config, file, Dumper=SafeDumper)
+
+        return config
+
+
     except Exception:
+        st.warning(f"Error loading config, using default: {str(e)}")
         return {
             'cookie': {
                 'expiry_days': 30,
@@ -150,6 +170,9 @@ def load_config():
                 }
             }
         }
+        # Initialize S3 with default config
+        save_users_to_s3(default_config['credentials']['usernames'])
+        return default_config
 
 def validate_password(password: str) -> tuple[bool, str]:
     """Validate password strength"""
@@ -167,6 +190,19 @@ def validate_email(email: str) -> bool:
     """Validate email format"""
     pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
     return bool(re.match(pattern, email))
+
+def sync_credentials_with_s3():
+    """Force sync local credentials with S3"""
+    try:
+        config = load_config()
+        # Upload current credentials to S3
+        success = save_users_to_s3(config['credentials']['usernames'])
+        if success:
+            st.success("Successfully synchronized credentials with S3")
+        else:
+            st.error("Failed to synchronize credentials with S3")
+    except Exception as e:
+        st.error(f"Error syncing credentials: {str(e)}")
 
 def render_auth_ui():
     """Render authentication UI with signup and password reset"""
@@ -215,6 +251,15 @@ def render_auth_ui():
                         st.session_state['user_data'] = {}
                         
                     st.success("Login successful!")
+
+                    # email = config['credentials']['usernames'][username]['email']
+                    # config['credentials']['usernames'][username] = {
+                    #     'password': password,
+                    #     'email': email,
+                    #     'name': username
+                    # }
+                    # save_config(config)
+
                     return True
 
                 ##
@@ -268,6 +313,10 @@ def render_auth_ui():
                 'name': new_username
             }
             save_config(config)
+
+            # Initialize empty profile for the new user
+            save_user_profile(new_username, {})
+
             st.success("Account created successfully! Please login.")
             st.balloons()
 
@@ -312,6 +361,13 @@ def render_auth_ui():
                 st.info(f"Your temporary password is: {temp_password}")
             else:
                 st.error("Invalid username or email")
+
+    # Add a new admin section that can force sync
+    if st.checkbox("Admin Options"):
+        st.caption("Use these options only if you're experiencing credential synchronization issues")
+        if st.button("Force Sync Credentials with S3"):
+            sync_credentials_with_s3()
+
 
     return False
 
