@@ -4,10 +4,42 @@ cookie:
   name: dietary_safety_checker
 credentials:
   usernames:
+    Lakshmi Jyothi G:
+      email: gandhamlakshmijyothi@gmail.com
+      name: Lakshmi Jyothi G
+      password: Houston25
+    bujimallavenkatesh:
+      email: bujimalla.venkatesh99@gmail.com
+      name: bujimallavenkatesh
+      password: Pass@123
+    bysani:
+      email: saikumarbysani11@gmail.com
+      name: bysani
+      password: Saikumar@12
+    jane2:
+      email: jdowner@hawk.iit.edu
+      name: jane2
+      password: Password7
     janesd:
       email: jane.s.downer@gmail.com
       name: janesd
       password: Password7
+    johndoe:
+      email: johndoe@gmail.com
+      name: johndoe
+      password: Pass@123
+    johndoe123:
+      email: johndoe123@gmail.com
+      name: johndoe123
+      password: Pass@123
+    maggie:
+      email: mdowner64@gmail.com
+      name: maggie
+      password: Password7
+    sai:
+      email: saikumarbysani13@gmail.com
+      name: sai
+      password: Temp123!
     testuser:
       email: test@example.com
       name: Test User

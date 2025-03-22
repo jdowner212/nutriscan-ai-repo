@@ -92,21 +92,6 @@ if 'run_analysis_for_barcode' in st.session_state:
 
 
 
-
-# # Check authentication
-# if not st.session_state.get('authenticated', False):
-#     # Custom login page header (similar to the main header but customized for login)
-#     st.markdown("""
-#         <div class="main-header">
-#             <div class="brand-header">🛒 NutriScan AI</div>
-#         </div>
-#         <div class="header-divider"></div>
-#     """, unsafe_allow_html=True)
-    
-#     if render_auth_ui():
-#         st.rerun()
-#     st.stop()
-
 # Check authentication
 if not st.session_state.get('authenticated', False):
     # Only show the centered header for login page
@@ -284,8 +269,6 @@ if st.session_state.step == 'welcome':
                                 st.rerun()
                             st.divider()
 
-###
-
 
     # Tips Section
     with st.expander("💡 Quick Tips"):
@@ -325,11 +308,9 @@ elif st.session_state.step == 'personal_info':
 
                 if valid:
                     st.session_state.user_data.update(user_data)  # Add this line
-                    
                     # Save user data
                     if st.session_state.get('username'):
                         save_user_profile(st.session_state['username'], st.session_state.user_data)
-                    
                     st.session_state.step = 'health_info'
                     st.rerun()
                 else:
@@ -382,6 +363,9 @@ elif st.session_state.step == 'health_info':
                     'dietary_restrictions': dietary_restrictions
                 })
 
+                # Save the complete user profile
+                if st.session_state.get('username'):
+                    save_user_profile(st.session_state['username'], st.session_state.user_data)
                 # Different navigation based on flow type
                 if st.session_state.flow_type == 'onboarding':
                     st.session_state.step = 'barcode_scanning'
@@ -395,11 +379,6 @@ elif st.session_state.step == 'health_info':
 # 3. Barcode Scanning Step
 elif st.session_state.step == 'barcode_scanning':
     st.header("Scan Product Barcode")
-
-    # Add a progress indicator
-    # progress_steps = ["1. Scan", "2. Verify", "3. Analyze", "4. Results"]
-    # st.write("Progress: " + " → ".join([f"**{progress_steps[0]}**"] + progress_steps[1:]))
-    
 
     # Add return to home button at the top
     if st.button("Return to Home", key="barcode_home_btn"):
@@ -426,41 +405,6 @@ elif st.session_state.step == 'barcode_scanning':
 
                 if barcode:
                     handle_barcode(barcode)
-                    # get_barcode_next_steps(barcode)
-
-                    # if st.session_state.barcode_scanned:
-                    #     # Display the appropriate UI based on scan state
-                    #     if st.session_state.scan_state == 'found_in_history':
-                    #         with st.container():
-                    #             st.info("This product has been analyzed before. What would you like to do?")
-                                
-                    #             col1, col2 = st.columns(2)
-                    #             with col1:
-                    #                 if st.button("View Previous Analysis"):
-                    #                     st.session_state.analysis_results = st.session_state.historical_data['analysis_results']
-                    #                     st.session_state.step = 'results'
-                    #                     st.session_state.from_history = True
-                    #                     st.rerun()
-                    #             with col2:
-                    #                 if st.button("Analyze Again"):
-                    #                     product_info = get_product_info(barcode)
-                    #                     # print('DEBUG: product_info:', product_info)
-                    #                     if product_info:
-                    #                         product_info['barcode'] = barcode
-                    #                         st.session_state.current_product = product_info
-                    #                         st.session_state.barcode_scanned = True
-                    #                         st.session_state.scan_state = 'showing_details'
-                    #                         st.session_state.run_analysis_for_barcode = barcode
-                    #                         st.rerun()
-                    #                     # run_analyze(barcode)
-                        
-                    #     elif st.session_state.scan_state == 'showing_details':
-                    #         with st.container():
-                    #             # Show product verification UI
-                    #             st.success("Product found! Please verify the details below:")
-                    #             display_product_verification(st.session_state.current_product.get('barcode', ''))
-
-#####
 
                 else:
                     st.error("Could not detect a barcode in the image. Please ensure the barcode is clearly visible.")
@@ -481,59 +425,16 @@ elif st.session_state.step == 'barcode_scanning':
                 # Convert PIL Image to OpenCV format
                 img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
                 barcode = scan_barcode(img_cv)
-                # print(f"DEBUG - Detected barcode: {barcode}, type: {type(barcode)}")
 
                 if barcode:
                     handle_barcode(barcode)
-                    # get_barcode_next_steps(barcode)
-
-                    # if st.session_state.barcode_scanned:
-                    #     # Display the appropriate UI based on scan state
-                    #     if st.session_state.scan_state == 'found_in_history':
-                    #         with st.container():
-                    #             st.info("This product has been analyzed before. What would you like to do?")
-                                
-                    #             col1, col2 = st.columns(2)
-                    #             with col1:
-                    #                 if st.button("View Previous Analysis"):
-                    #                     st.session_state.analysis_results = st.session_state.historical_data['analysis_results']
-                    #                     st.session_state.step = 'results'
-                    #                     st.session_state.from_history = True
-                    #                     st.rerun()
-                    #             with col2:
-                    #                 if st.button("Analyze Again"):
-                    #                     product_info = get_product_info(barcode)
-                    #                     # print('DEBUG: product_info:', product_info)
-                    #                     if product_info:
-                    #                         product_info['barcode'] = barcode
-                    #                         st.session_state.current_product = product_info
-                    #                         st.session_state.barcode_scanned = True
-                    #                         st.session_state.scan_state = 'showing_details'
-                    #                         st.session_state.run_analysis_for_barcode = barcode
-                    #                         st.rerun()
-                    #                     # run_analyze(barcode)
-
-                    #     elif st.session_state.scan_state == 'showing_details':
-                    #         with st.container():
-                    #             # Show product verification UI
-                    #             st.success("Product found! Please verify the details below:")
-                    #             display_product_verification(st.session_state.current_product.get('barcode', ''))
-
-#######
-
                 else:
                     st.error("Could not detect a barcode in the image. Please ensure the barcode is clearly visible.")
 
-                ###
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
                 st.info("Please try again with a clearer image or contact support if the problem persists.")
 
-    # Back button
-    # if not st.session_state.barcode_scanned:
-    #     if st.button("Back"):
-    #         st.session_state.step = 'health_info'
-    #         st.rerun()
 
     # Back button at the bottom (existing)
     col1, col2 = st.columns(2)
@@ -542,11 +443,9 @@ elif st.session_state.step == 'barcode_scanning':
             st.session_state.step = 'health_info'
             st.rerun()
     with col2:
-        # st.markdown('<div class="danger-button">', unsafe_allow_html=True)
         if st.button("Cancel Scanning"):
             st.session_state.step = 'welcome'
             st.rerun()
-        # st.markdown('</div>', unsafe_allow_html=True)
 
 
 # Results
@@ -557,10 +456,7 @@ elif st.session_state.step == 'results':
         # Show a badge if viewing from history
         if st.session_state.get('from_history', False):
             st.info("You are viewing a previously analyzed product from your history")
-        
         st.markdown(st.session_state.analysis_results)
-        # st.markdown("analysis_result['success']:",st.session_state.analysis_success)
-
 
     if st.session_state.get('from_history', False):
         col1, col2 = st.columns(2)
@@ -571,10 +467,8 @@ elif st.session_state.step == 'results':
                 authenticated = st.session_state.get('authenticated', False)
                 username = st.session_state.get('username', None)
                 user_data = st.session_state.get('user_data', {})
-                
                 # Clear state but preserve important data
                 st.session_state.clear()
-                
                 # Restore important state
                 st.session_state['authenticated'] = authenticated
                 st.session_state['username'] = username
@@ -583,7 +477,6 @@ elif st.session_state.step == 'results':
 
                 st.rerun()
 
-                ##
         with col2:
             if st.button("Analyze New Product"):
 
@@ -591,10 +484,8 @@ elif st.session_state.step == 'results':
                 authenticated = st.session_state.get('authenticated', False)
                 username = st.session_state.get('username', None)
                 user_data = st.session_state.get('user_data', {})
-                
                 # Clear state but preserve important data
                 st.session_state.clear()
-                
                 # Restore important state
                 st.session_state['authenticated'] = authenticated
                 st.session_state['username'] = username
@@ -612,10 +503,8 @@ elif st.session_state.step == 'results':
                 authenticated = st.session_state.get('authenticated', False)
                 username = st.session_state.get('username', None)
                 user_data = st.session_state.get('user_data', {})
-                
                 # Clear state but preserve important data
                 st.session_state.clear()
-                
                 # Restore important state
                 st.session_state['authenticated'] = authenticated
                 st.session_state['username'] = username
@@ -623,17 +512,14 @@ elif st.session_state.step == 'results':
                 st.session_state['step'] = 'barcode_scanning'
                 
                 st.rerun()
-                ##
         with col2:
             if st.button("Return to Home"):
                 # Preserve authentication and user data
                 authenticated = st.session_state.get('authenticated', False)
                 username = st.session_state.get('username', None)
                 user_data = st.session_state.get('user_data', {})
-                
                 # Clear only analysis-related state
                 st.session_state.clear()
-                
                 # Restore important state
                 st.session_state['authenticated'] = authenticated
                 st.session_state['username'] = username

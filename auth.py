@@ -22,6 +22,20 @@ s3_client=boto3.client(
     )
 )
 
+aws_access_key = os.getenv('AWS_ACCESS_KEY_ID')
+aws_secret_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+aws_region = os.getenv('AWS_REGION', 'us-east-2')
+s3_bucket = os.getenv('S3_BUCKET', 'nutriscan-ai-users-jane')
+
+
+# Print debug info
+print(f"DEBUG - AWS Access Key: {aws_access_key[:5]}... Secret Key: {'*' * 5} Region: {aws_region} Bucket: {s3_bucket}")
+
+# Check for missing credentials
+if not aws_access_key or not aws_secret_key:
+    print("ERROR - AWS credentials are missing!")
+
+
 S3_BUCKET = os.getenv('S3_BUCKET')
 S3_USERS_KEY = 'users/credentials.json'
 S3_PROFILES_KEY = 'users/profiles.json'
